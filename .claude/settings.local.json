@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "PowerShell(cd c:\\\\DEV\\\\in-progress\\\\shop-cc-next; npm create vite@latest . -- --template vue 2>&1)",
+      "PowerShell(cd c:\\\\DEV\\\\in-progress\\\\shop-cc-next; npm create vite@latest . -- --template vue)",
+      "PowerShell(Get-Command node, npm, pnpm, yarn 2>&1)",
+      "PowerShell($env:PATH -split ';' | Where-Object { $_ -ne '' } | Sort-Object)"
+    ]
+  }
+}
