@@ -46,6 +46,14 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ## Changelog
 
+### v0.1.1 — 2026-04-30
+
+#### Bug Fixes
+
+- **Router component mapping**: Added missing `component` properties to route records using dynamic import syntax (`() => import('@/views/...')`). Fixed Vue Router warning: "Record with path is either missing a component(s) or children property."
+- **Keep-alive multiple root nodes**: Wrapped all sibling elements in view templates with a single root `<div>` container to comply with Vue 3's `<keep-alive>` requirement. Fixed "parentComponent.ctx.deactivate is not a function" error.
+- **Removed unused route**: Eliminated unused `/home` route and set default redirect to `/order-inquiry`.
+
 ### v0.1.0 — 2026-04-30
 
 - Initial project setup with Vite + Vue 3 + Vue Router + Pinia
