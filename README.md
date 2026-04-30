@@ -48,6 +48,12 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-04-30
 
+#### v0.1.3 — Bug Fixes
+
+- **MDI Routing Edge Case Bug Fix (Back navigation)**: Resolved a UI desync bug where using the browser's back button to navigate to a previously closed tab would update the URL and content area correctly, but fail to re-create the tab in the tab bar UI.
+  - **Root cause**: The `watch(() => route.name, ...)` in `App.vue` only called `activateTab()` when the incoming route name already existed in `mdiStore.tabs`. If the tab had been closed, it was absent from the list and the watch did nothing, leaving the tab bar out of sync with the URL.
+  - **Fix (`App.vue`)**: Extended the watch with a two-branch check. If `route.name` is found in the open tab list, `activateTab()` is called as before. If it is not found (i.e., the tab was previously closed), `openTab()` is called instead, reconstructing the tab from `route.meta.title` and `route.path`. This restores the tab bar entry and sets it as the active tab, keeping the UI fully in sync with the browser history.
+
 #### v0.1.2 — Bug Fixes
 
 - **MDI Routing & Rendering Bug Fix**: Resolved tab switching bug where the browser URL updated correctly but the rendered view remained stuck on the previously active tab.

@@ -11,8 +11,18 @@ const mdiStore = useMdiStore()
 watch(
   () => route.name,
   (name) => {
-    if (name && mdiStore.tabs.some(t => t.name === name) && mdiStore.activeTabName !== String(name)) {
-      mdiStore.activateTab(String(name))
+    if (!name) return
+    const tabExists = mdiStore.tabs.some(t => t.name === name)
+    if (tabExists) {
+      if (mdiStore.activeTabName !== String(name)) {
+        mdiStore.activateTab(String(name))
+      }
+    } else {
+      mdiStore.openTab({
+        name: String(name),
+        title: route.meta?.title ?? String(name),
+        path: route.path,
+      })
     }
   }
 )
