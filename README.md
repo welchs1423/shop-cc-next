@@ -48,6 +48,17 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-04-30
 
+#### v0.2.0 — Features
+
+- **Data Grid & Inline Editing (Order Inquiry)**: Replaced the basic HTML table in `OrderInquiry.vue` with **AG-Grid Community Edition v35** (`ag-grid-vue3`) for enterprise-grade large-dataset rendering.
+  - **10-column grid**: Order ID (pinned left), Customer, Phone, Order Date, Product, Amount (₩), Shipping Address, Carrier, Tracking No., Order Status.
+  - **1,000 mock records**: Deterministic mock data generated at runtime; AG-Grid's built-in row virtualization renders all 1,000 rows with no perceptible delay.
+  - **Inline editing**: The "Order Status" column is editable via a custom Vue 3 cell editor component (`StatusCellEditor.vue`). Clicking the cell opens a native `<select>` dropdown directly in the grid cell; pressing Escape or choosing a value commits the change without leaving the row.
+  - **Pinia integration**: The status dropdown options are sourced from `useCommonCodeStore().orderStatusCodes`, keeping the grid in sync with the global common code cache loaded at app startup.
+  - **Column features**: Sorting and column filtering enabled on key columns; columns are resizable and the Amount column uses locale-formatted currency display (`₩`).
+
+
+
 #### v0.1.3 — Bug Fixes
 
 - **MDI Routing Edge Case Bug Fix (Back navigation)**: Resolved a UI desync bug where using the browser's back button to navigate to a previously closed tab would update the URL and content area correctly, but fail to re-create the tab in the tab bar UI.

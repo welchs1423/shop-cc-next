@@ -1,45 +1,139 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
+import { AgGridVue } from 'ag-grid-vue3'
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { useCommonCodeStore } from '@/stores/commonCode'
+import StatusCellEditor from '@/components/grid/StatusCellEditor.vue'
+
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-alpine.css'
+
+ModuleRegistry.registerModules([AllCommunityModule])
 
 const commonCodeStore = useCommonCodeStore()
 
 const searchKeyword = ref('')
 const selectedStatus = ref('')
 const selectedDelivery = ref('')
-const results = ref([])
-const searched = ref(false)
 
 const orderStatusOptions = computed(() =>
-  commonCodeStore.orderStatusCodes.map(c => ({
-    value: c.code,
-    label: c.name
-  }))
+  commonCodeStore.orderStatusCodes.map(c => ({ value: c.code, label: c.name }))
 )
-
 const deliveryOptions = computed(() =>
-  commonCodeStore.deliveryCodes.map(c => ({
-    value: c.code,
-    label: c.name
-  }))
+  commonCodeStore.deliveryCodes.map(c => ({ value: c.code, label: c.name }))
 )
 
-const MOCK_DATA = [
-  { id: 1, orderId: 'ORD-20240101', customer: 'John Doe', product: 'Running Shoes', amount: '$89.99', status: 'SHIPPED', delivery: 'CJGLS' },
-  { id: 2, orderId: 'ORD-20240102', customer: 'Jane Smith', product: 'Yoga Mat', amount: '$45.00', status: 'PENDING', delivery: 'KROSE' },
-  { id: 3, orderId: 'ORD-20240103', customer: 'Bob Johnson', product: 'Water Bottle', amount: '$24.99', status: 'DELIVERED', delivery: 'HANJIN' },
-  { id: 4, orderId: 'ORD-20240104', customer: 'Alice Brown', product: 'Fitness Tracker', amount: '$129.00', status: 'CANCELLED', delivery: 'COUPANG' },
+const DELIVERY_CODES = ['CJGLS', 'KROSE', 'KANGNAM', 'DONGBU', 'HANJIN', 'LGUP', 'COUPANG', 'NAVER']
+const STATUS_CODES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURNED', 'EXCHANGED', 'REFUNDED']
+const PRODUCTS = [
+  'Running Shoes', 'Yoga Mat', 'Water Bottle', 'Fitness Tracker',
+  'Backpack', 'Sunglasses', 'Smart Watch', 'Wireless Headphones',
+  'Winter Jacket', 'Canvas Sneakers',
 ]
+const CUSTOMERS = [
+  'Kim Minjun', 'Lee Soomin', 'Park Jihye', 'Choi Dongwoo',
+  'Jung Yuna', 'Han Seongjae', 'Yoon Jiyoung', 'Lim Taehyun',
+  'Song Hyuna', 'Oh Seungwoo',
+]
+const DISTRICTS = ['Gangnam-gu', 'Gangseo-gu', 'Songpa-gu', 'Mapo-gu', 'Jongno-gu']
+
+function pad(n, width) {
+  return String(n).padStart(width, '0')
+}
+
+function generateMockData() {
+  const rows = []
+  for (let i = 1; i <= 1000; i++) {
+    const month = pad((i % 12) + 1, 2)
+    const day = pad((i % 28) + 1, 2)
+    const hour = pad(i % 24, 2)
+    const min = pad((i * 7) % 60, 2)
+    rows.push({
+      orderId: `ORD-2024${month}${pad(i, 5)}`,
+      customerName: CUSTOMERS[i % CUSTOMERS.length],
+      phone: `010-${pad(1000 + (i * 37) % 9000, 4)}-${pad(1000 + (i * 53) % 9000, 4)}`,
+      orderDate: `2024-${month}-${day} ${hour}:${min}`,
+      productName: PRODUCTS[i % PRODUCTS.length],
+      amount: (10 + (i % 490)) * 1000,
+      shippingAddress: `Seoul ${DISTRICTS[i % DISTRICTS.length]} ${(i % 999) + 1}`,
+      deliveryCompany: DELIVERY_CODES[i % DELIVERY_CODES.length],
+      trackingNumber: `TR${pad((i * 999983) % 1000000000, 9)}`,
+      orderStatus: STATUS_CODES[i % STATUS_CODES.length],
+    })
+  }
+  return rows
+}
+
+const allRowData = generateMockData()
+const rowData = ref([...allRowData])
+
+const columnDefs = computed(() => [
+  {
+    field: 'orderId',
+    headerName: 'Order ID',
+    width: 170,
+    pinned: 'left',
+    sortable: true,
+    filter: true,
+  },
+  { field: 'customerName', headerName: 'Customer', width: 130, sortable: true, filter: true },
+  { field: 'phone', headerName: 'Phone', width: 145, sortable: false },
+  { field: 'orderDate', headerName: 'Order Date', width: 155, sortable: true },
+  { field: 'productName', headerName: 'Product', width: 170, sortable: true, filter: true },
+  {
+    field: 'amount',
+    headerName: 'Amount (₩)',
+    width: 130,
+    sortable: true,
+    valueFormatter: p => `₩${p.value.toLocaleString()}`,
+    type: 'numericColumn',
+  },
+  { field: 'shippingAddress', headerName: 'Shipping Address', width: 230, sortable: false },
+  {
+    field: 'deliveryCompany',
+    headerName: 'Carrier',
+    width: 130,
+    sortable: true,
+    filter: true,
+    valueFormatter: p => commonCodeStore.getDeliveryName(p.value),
+  },
+  { field: 'trackingNumber', headerName: 'Tracking No.', width: 155, sortable: false },
+  {
+    field: 'orderStatus',
+    headerName: 'Order Status',
+    width: 150,
+    sortable: true,
+    filter: true,
+    editable: true,
+    cellEditor: StatusCellEditor,
+    valueFormatter: p => {
+      const info = commonCodeStore.getOrderStatusInfo(p.value)
+      return info ? info.name : p.value
+    },
+    cellStyle: { cursor: 'pointer', color: '#2563eb', fontWeight: '600' },
+  },
+])
+
+const defaultColDef = {
+  resizable: true,
+  suppressMovable: false,
+}
+
+const gridApi = shallowRef(null)
+
+function onGridReady(params) {
+  gridApi.value = params.api
+}
 
 function search() {
-  searched.value = true
-  results.value = MOCK_DATA.filter(row => {
+  rowData.value = allRowData.filter(row => {
+    const kw = searchKeyword.value.toLowerCase()
     const matchKeyword =
-      !searchKeyword.value ||
-      row.orderId.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-      row.customer.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    const matchStatus = !selectedStatus.value || row.status === selectedStatus.value
-    const matchDelivery = !selectedDelivery.value || row.delivery === selectedDelivery.value
+      !kw ||
+      row.orderId.toLowerCase().includes(kw) ||
+      row.customerName.toLowerCase().includes(kw)
+    const matchStatus = !selectedStatus.value || row.orderStatus === selectedStatus.value
+    const matchDelivery = !selectedDelivery.value || row.deliveryCompany === selectedDelivery.value
     return matchKeyword && matchStatus && matchDelivery
   })
 }
@@ -48,24 +142,7 @@ function reset() {
   searchKeyword.value = ''
   selectedStatus.value = ''
   selectedDelivery.value = ''
-  results.value = []
-  searched.value = false
-}
-
-function getStatusLabel(code) {
-  const info = commonCodeStore.getOrderStatusInfo(code)
-  return info ? info.name : code
-}
-
-function getDeliveryName(code) {
-  return commonCodeStore.getDeliveryName(code)
-}
-
-const statusClass = {
-  SHIPPED: 'badge-blue',
-  PENDING: 'badge-yellow',
-  DELIVERED: 'badge-green',
-  CANCELLED: 'badge-red',
+  rowData.value = [...allRowData]
 }
 </script>
 
@@ -90,24 +167,16 @@ const statusClass = {
           <label class="field-label">Status</label>
           <select v-model="selectedStatus" class="field-select">
             <option value="">All</option>
-            <option
-              v-for="opt in orderStatusOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
+            <option v-for="opt in orderStatusOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
         </div>
         <div class="field-group">
-          <label class="field-label">Delivery</label>
+          <label class="field-label">Carrier</label>
           <select v-model="selectedDelivery" class="field-select">
             <option value="">All</option>
-            <option
-              v-for="opt in deliveryOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
+            <option v-for="opt in deliveryOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
@@ -119,38 +188,21 @@ const statusClass = {
       </div>
     </div>
 
-    <div class="result-panel">
-      <div class="result-header">
-        <span class="result-count" v-if="searched">
-          {{ results.length }} result(s) found
-        </span>
-      </div>
-      <table v-if="results.length > 0">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Product</th>
-            <th>Amount</th>
-            <th>Delivery</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in results" :key="row.id">
-            <td>{{ row.orderId }}</td>
-            <td>{{ row.customer }}</td>
-            <td>{{ row.product }}</td>
-            <td>{{ row.amount }}</td>
-            <td>{{ getDeliveryName(row.delivery) }}</td>
-            <td>
-              <span class="badge" :class="statusClass[row.status]">{{ getStatusLabel(row.status) }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-else-if="searched" class="empty-result">No results found.</div>
-      <div v-else class="empty-result">Enter search conditions and click Search.</div>
+    <div class="result-meta">
+      <span class="result-count">{{ rowData.length.toLocaleString() }} record(s)</span>
+      <span class="edit-hint">Click a cell in "Order Status" column to edit inline</span>
+    </div>
+
+    <div class="grid-wrapper ag-theme-alpine">
+      <ag-grid-vue
+        style="width: 100%; height: 100%"
+        :rowData="rowData"
+        :columnDefs="columnDefs"
+        :defaultColDef="defaultColDef"
+        :rowSelection="'single'"
+        :animateRows="false"
+        @grid-ready="onGridReady"
+      />
     </div>
   </div>
 </template>
@@ -161,12 +213,14 @@ const statusClass = {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  box-sizing: border-box;
 }
 
 .view-header {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .view-title {
@@ -180,6 +234,7 @@ const statusClass = {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px 20px;
+  flex-shrink: 0;
 }
 
 .search-row {
@@ -225,7 +280,6 @@ const statusClass = {
 .search-actions {
   display: flex;
   gap: 8px;
-  padding-bottom: 0;
 }
 
 .btn {
@@ -235,60 +289,39 @@ const statusClass = {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-primary {
-  background: #3b82f6;
-  color: #ffffff;
-}
+.btn-primary { background: #3b82f6; color: #ffffff; }
+.btn-primary:hover { background: #2563eb; }
+.btn-secondary { background: #e5e7eb; color: var(--text-primary); }
+.btn-secondary:hover { background: #d1d5db; }
 
-.btn-primary:hover {
-  background: #2563eb;
-}
-
-.btn-secondary {
-  background: #e5e7eb;
-  color: var(--text-primary);
-}
-
-.btn-secondary:hover {
-  background: #d1d5db;
-}
-
-.result-panel {
-  flex: 1;
+.result-meta {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.result-header {
-  min-height: 20px;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
 }
 
 .result-count {
   font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.empty-result {
-  padding: 40px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
   font-weight: 600;
+  color: var(--text-secondary);
 }
 
-.badge-blue { background: #dbeafe; color: #1d4ed8; }
-.badge-yellow { background: #fef9c3; color: #854d0e; }
-.badge-green { background: #dcfce7; color: #166534; }
-.badge-red { background: #fee2e2; color: #991b1b; }
+.edit-hint {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.grid-wrapper {
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
 </style>
