@@ -48,6 +48,14 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-04-30
 
+#### v0.2.1 — Improvements
+
+- **Grid Column Auto-sizing & Flex Layout (Order Inquiry)**: Replaced fixed pixel widths on all non-pinned AG-Grid columns in `OrderInquiry.vue` with proportional `flex` values so the grid fills the full container width at any viewport size.
+  - **Order ID** column remains pinned left with a fixed `width: 175` / `minWidth: 150` (pinned columns are excluded from flex layout).
+  - **Proportional flex weights**: `shippingAddress` → `flex: 3`; `productName` → `flex: 2.5`; `orderDate` and `trackingNumber` → `flex: 2`; all other columns → `flex: 1.5`. Longer-content columns receive a higher flex ratio to avoid awkward truncation.
+  - **`minWidth` guards**: Every flex column carries a `minWidth` constraint so narrow viewport widths degrade gracefully without collapsing columns to zero.
+  - Columns continue to be independently resizable by the user and the grid responds smoothly to browser window resize events without any manual `sizeColumnsToFit()` call.
+
 #### v0.2.0 — Features
 
 - **Data Grid & Inline Editing (Order Inquiry)**: Replaced the basic HTML table in `OrderInquiry.vue` with **AG-Grid Community Edition v35** (`ag-grid-vue3`) for enterprise-grade large-dataset rendering.
