@@ -1,16 +1,33 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useCommonCodeStore } from '@/stores/commonCode'
+
+const commonCodeStore = useCommonCodeStore()
 
 const searchKeyword = ref('')
 const selectedType = ref('')
 const results = ref([])
 const searched = ref(false)
 
+const claimTypeOptions = computed(() =>
+  commonCodeStore.claimTypeCodes.map(c => ({
+    value: c.code,
+    label: c.name
+  }))
+)
+
+const claimStatusOptions = computed(() =>
+  commonCodeStore.claimStatusCodes.map(c => ({
+    value: c.code,
+    label: c.name
+  }))
+)
+
 const MOCK_DATA = [
-  { id: 1, claimId: 'CLM-20240101', orderId: 'ORD-20240101', customer: 'John Doe', type: 'Return', reason: 'Defective product', status: 'In Progress' },
-  { id: 2, claimId: 'CLM-20240102', orderId: 'ORD-20240102', customer: 'Jane Smith', type: 'Exchange', reason: 'Wrong size', status: 'Completed' },
-  { id: 3, claimId: 'CLM-20240103', orderId: 'ORD-20240103', customer: 'Bob Johnson', type: 'Refund', reason: 'Not as described', status: 'Pending' },
-  { id: 4, claimId: 'CLM-20240104', orderId: 'ORD-20240104', customer: 'Alice Brown', type: 'Return', reason: 'Changed mind', status: 'Rejected' },
+  { id: 1, claimId: 'CLM-20240101', orderId: 'ORD-20240101', customer: 'John Doe', type: 'RETURN', reason: 'Defective product', status: 'IN_PROGRESS' },
+  { id: 2, claimId: 'CLM-20240102', orderId: 'ORD-20240102', customer: 'Jane Smith', type: 'EXCHANGE', reason: 'Wrong size', status: 'COMPLETED' },
+  { id: 3, claimId: 'CLM-20240103', orderId: 'ORD-20240103', customer: 'Bob Johnson', type: 'REFUND', reason: 'Not as described', status: 'PENDING' },
+  { id: 4, claimId: 'CLM-20240104', orderId: 'ORD-20240104', customer: 'Alice Brown', type: 'RETURN', reason: 'Changed mind', status: 'REJECTED' },
 ]
 
 function search() {
@@ -32,17 +49,27 @@ function reset() {
   searched.value = false
 }
 
+function getTypeLabel(code) {
+  const info = commonCodeStore.getClaimTypeInfo(code)
+  return info ? info.name : code
+}
+
+function getStatusLabel(code) {
+  const info = commonCodeStore.getClaimStatusInfo(code)
+  return info ? info.name : code
+}
+
 const statusClass = {
-  'In Progress': 'badge-blue',
-  Completed: 'badge-green',
-  Pending: 'badge-yellow',
-  Rejected: 'badge-red',
+  IN_PROGRESS: 'badge-blue',
+  COMPLETED: 'badge-green',
+  PENDING: 'badge-yellow',
+  REJECTED: 'badge-red',
 }
 
 const typeClass = {
-  Return: 'type-return',
-  Exchange: 'type-exchange',
-  Refund: 'type-refund',
+  RETURN: 'type-return',
+  EXCHANGE: 'type-exchange',
+  REFUND: 'type-refund',
 }
 </script>
 
@@ -67,9 +94,13 @@ const typeClass = {
           <label class="field-label">Claim Type</label>
           <select v-model="selectedType" class="field-select">
             <option value="">All</option>
-            <option value="Return">Return</option>
-            <option value="Exchange">Exchange</option>
-            <option value="Refund">Refund</option>
+            <option
+              v-for="opt in claimTypeOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </option>
           </select>
         </div>
         <div class="search-actions">
@@ -102,11 +133,11 @@ const typeClass = {
             <td>{{ row.orderId }}</td>
             <td>{{ row.customer }}</td>
             <td>
-              <span class="type-tag" :class="typeClass[row.type]">{{ row.type }}</span>
+              <span class="type-tag" :class="typeClass[row.type]">{{ getTypeLabel(row.type) }}</span>
             </td>
             <td>{{ row.reason }}</td>
             <td>
-              <span class="badge" :class="statusClass[row.status]">{{ row.status }}</span>
+              <span class="badge" :class="statusClass[row.status]">{{ getStatusLabel(row.status) }}</span>
             </td>
           </tr>
         </tbody>

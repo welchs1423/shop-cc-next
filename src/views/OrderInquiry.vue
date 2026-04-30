@@ -1,16 +1,34 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useCommonCodeStore } from '@/stores/commonCode'
+
+const commonCodeStore = useCommonCodeStore()
 
 const searchKeyword = ref('')
 const selectedStatus = ref('')
+const selectedDelivery = ref('')
 const results = ref([])
 const searched = ref(false)
 
+const orderStatusOptions = computed(() =>
+  commonCodeStore.orderStatusCodes.map(c => ({
+    value: c.code,
+    label: c.name
+  }))
+)
+
+const deliveryOptions = computed(() =>
+  commonCodeStore.deliveryCodes.map(c => ({
+    value: c.code,
+    label: c.name
+  }))
+)
+
 const MOCK_DATA = [
-  { id: 1, orderId: 'ORD-20240101', customer: 'John Doe', product: 'Running Shoes', amount: '$89.99', status: 'Shipped' },
-  { id: 2, orderId: 'ORD-20240102', customer: 'Jane Smith', product: 'Yoga Mat', amount: '$45.00', status: 'Pending' },
-  { id: 3, orderId: 'ORD-20240103', customer: 'Bob Johnson', product: 'Water Bottle', amount: '$24.99', status: 'Delivered' },
-  { id: 4, orderId: 'ORD-20240104', customer: 'Alice Brown', product: 'Fitness Tracker', amount: '$129.00', status: 'Cancelled' },
+  { id: 1, orderId: 'ORD-20240101', customer: 'John Doe', product: 'Running Shoes', amount: '$89.99', status: 'SHIPPED', delivery: 'CJGLS' },
+  { id: 2, orderId: 'ORD-20240102', customer: 'Jane Smith', product: 'Yoga Mat', amount: '$45.00', status: 'PENDING', delivery: 'KROSE' },
+  { id: 3, orderId: 'ORD-20240103', customer: 'Bob Johnson', product: 'Water Bottle', amount: '$24.99', status: 'DELIVERED', delivery: 'HANJIN' },
+  { id: 4, orderId: 'ORD-20240104', customer: 'Alice Brown', product: 'Fitness Tracker', amount: '$129.00', status: 'CANCELLED', delivery: 'COUPANG' },
 ]
 
 function search() {
@@ -21,22 +39,33 @@ function search() {
       row.orderId.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
       row.customer.toLowerCase().includes(searchKeyword.value.toLowerCase())
     const matchStatus = !selectedStatus.value || row.status === selectedStatus.value
-    return matchKeyword && matchStatus
+    const matchDelivery = !selectedDelivery.value || row.delivery === selectedDelivery.value
+    return matchKeyword && matchStatus && matchDelivery
   })
 }
 
 function reset() {
   searchKeyword.value = ''
   selectedStatus.value = ''
+  selectedDelivery.value = ''
   results.value = []
   searched.value = false
 }
 
+function getStatusLabel(code) {
+  const info = commonCodeStore.getOrderStatusInfo(code)
+  return info ? info.name : code
+}
+
+function getDeliveryName(code) {
+  return commonCodeStore.getDeliveryName(code)
+}
+
 const statusClass = {
-  Shipped: 'badge-blue',
-  Pending: 'badge-yellow',
-  Delivered: 'badge-green',
-  Cancelled: 'badge-red',
+  SHIPPED: 'badge-blue',
+  PENDING: 'badge-yellow',
+  DELIVERED: 'badge-green',
+  CANCELLED: 'badge-red',
 }
 </script>
 
@@ -61,10 +90,26 @@ const statusClass = {
           <label class="field-label">Status</label>
           <select v-model="selectedStatus" class="field-select">
             <option value="">All</option>
-            <option value="Pending">Pending</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
+            <option
+              v-for="opt in orderStatusOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Delivery</label>
+          <select v-model="selectedDelivery" class="field-select">
+            <option value="">All</option>
+            <option
+              v-for="opt in deliveryOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </option>
           </select>
         </div>
         <div class="search-actions">
@@ -87,6 +132,7 @@ const statusClass = {
             <th>Customer</th>
             <th>Product</th>
             <th>Amount</th>
+            <th>Delivery</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -96,8 +142,9 @@ const statusClass = {
             <td>{{ row.customer }}</td>
             <td>{{ row.product }}</td>
             <td>{{ row.amount }}</td>
+            <td>{{ getDeliveryName(row.delivery) }}</td>
             <td>
-              <span class="badge" :class="statusClass[row.status]">{{ row.status }}</span>
+              <span class="badge" :class="statusClass[row.status]">{{ getStatusLabel(row.status) }}</span>
             </td>
           </tr>
         </tbody>

@@ -48,6 +48,11 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### v0.1.1 — 2026-04-30
 
+#### Features
+
+- **Common Code Global State Management**: Implemented Pinia store (`useCommonCodeStore`) to manage delivery company codes and order status codes. Added mock API functions to fetch codes on app initialization.
+- **Search Filter Integration**: Updated `OrderInquiry` and `ClaimManagement` views to load search filter options (Select Box) from the common code store instead of hardcoded values.
+
 #### Bug Fixes
 
 - **Router component mapping**: Added missing `component` properties to route records using dynamic import syntax (`() => import('@/views/...')`). Fixed Vue Router warning: "Record with path is either missing a component(s) or children property."
