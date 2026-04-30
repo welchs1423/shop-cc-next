@@ -1,20 +1,20 @@
 <script setup>
-import { computed } from 'vue'
+import { watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMdiStore } from '@/stores/mdi'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppTabBar from '@/components/layout/AppTabBar.vue'
-import OrderInquiry from '@/views/OrderInquiry.vue'
-import ClaimManagement from '@/views/ClaimManagement.vue'
 
+const route = useRoute()
 const mdiStore = useMdiStore()
 
-const componentMap = {
-  OrderInquiry,
-  ClaimManagement,
-}
-
-const activeComponent = computed(() =>
-  mdiStore.activeTabName ? componentMap[mdiStore.activeTabName] : null
+watch(
+  () => route.name,
+  (name) => {
+    if (name && mdiStore.tabs.some(t => t.name === name) && mdiStore.activeTabName !== String(name)) {
+      mdiStore.activateTab(String(name))
+    }
+  }
 )
 </script>
 
@@ -24,13 +24,16 @@ const activeComponent = computed(() =>
     <div class="main-area">
       <AppTabBar />
       <div class="content-area">
-        <keep-alive>
-          <component
-            :is="activeComponent"
-            v-if="activeComponent"
-          />
-        </keep-alive>
-        <div v-if="!activeComponent" class="welcome">
+        <router-view v-slot="{ Component, route: currentRoute }">
+          <keep-alive>
+            <component
+              v-if="Component && mdiStore.activeTab"
+              :is="Component"
+              :key="currentRoute.fullPath"
+            />
+          </keep-alive>
+        </router-view>
+        <div v-if="!mdiStore.activeTab" class="welcome">
           <div class="welcome-inner">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e0" stroke-width="1.5">
               <rect x="3" y="3" width="7" height="7" rx="1"/>

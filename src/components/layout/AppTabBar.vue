@@ -15,8 +15,6 @@ function closeTab(event, tab) {
   mdiStore.closeTab(tab.name)
   if (mdiStore.activeTab) {
     router.push(mdiStore.activeTab.path)
-  } else {
-    router.push('/home')
   }
 }
 </script>

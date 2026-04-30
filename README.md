@@ -46,20 +46,27 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ## Changelog
 
-### v0.1.1 — 2026-04-30
+### 2026-04-30
 
-#### Features
+#### v0.1.2 — Bug Fixes
+
+- **MDI Routing & Rendering Bug Fix**: Resolved tab switching bug where the browser URL updated correctly but the rendered view remained stuck on the previously active tab.
+  - `App.vue`: Replaced Pinia-driven `<component :is>` rendering with Vue Router's `<router-view v-slot="{ Component, route }">` pattern. Added `:key="route.fullPath"` on the dynamic `<component>` inside `<keep-alive>` to guarantee Vue destroys and re-creates (or restores from cache) the correct component instance on every route change.
+  - `App.vue`: Added a `watch` on `route.name` to bidirectionally sync `mdiStore.activeTabName` from the router. This ensures the tab bar highlights the correct tab even when the URL changes from an external source (e.g., browser back/forward button).
+  - `AppTabBar.vue`: Removed stale `router.push('/home')` fallback in `closeTab` — no `/home` route exists, and the welcome screen is now driven purely by Pinia state (`mdiStore.activeTab`).
+
+#### v0.1.1 — Features
 
 - **Common Code Global State Management**: Implemented Pinia store (`useCommonCodeStore`) to manage delivery company codes and order status codes. Added mock API functions to fetch codes on app initialization.
 - **Search Filter Integration**: Updated `OrderInquiry` and `ClaimManagement` views to load search filter options (Select Box) from the common code store instead of hardcoded values.
 
-#### Bug Fixes
+#### v0.1.1 — Bug Fixes
 
 - **Router component mapping**: Added missing `component` properties to route records using dynamic import syntax (`() => import('@/views/...')`). Fixed Vue Router warning: "Record with path is either missing a component(s) or children property."
 - **Keep-alive multiple root nodes**: Wrapped all sibling elements in view templates with a single root `<div>` container to comply with Vue 3's `<keep-alive>` requirement. Fixed "parentComponent.ctx.deactivate is not a function" error.
 - **Removed unused route**: Eliminated unused `/home` route and set default redirect to `/order-inquiry`.
 
-### v0.1.0 — 2026-04-30
+#### v0.1.0 — Initial Setup
 
 - Initial project setup with Vite + Vue 3 + Vue Router + Pinia
 - Implemented MDI layout: left sidebar (LNB) + top tab bar + content area
