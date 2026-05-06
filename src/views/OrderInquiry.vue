@@ -4,6 +4,7 @@ import { AgGridVue } from 'ag-grid-vue3'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { useCommonCodeStore } from '@/stores/commonCode'
 import StatusCellEditor from '@/components/grid/StatusCellEditor.vue'
+import OrderDetailModal from '@/components/order/OrderDetailModal.vue'
 import { toast } from 'vue3-toastify'
 
 import 'ag-grid-community/styles/ag-grid.css'
@@ -187,6 +188,19 @@ function mockSaveOrderStatus(orderId, newStatus) {
   return new Promise(resolve => setTimeout(() => resolve({ ok: true, orderId, newStatus }), 500))
 }
 
+const selectedOrder = ref(null)
+const showDetailModal = ref(false)
+
+function onRowDoubleClicked(event) {
+  selectedOrder.value = { ...event.data }
+  showDetailModal.value = true
+}
+
+function closeDetailModal() {
+  showDetailModal.value = false
+  selectedOrder.value = null
+}
+
 async function onCellValueChanged(event) {
   if (event.oldValue === event.newValue) return
 
@@ -247,7 +261,7 @@ async function onCellValueChanged(event) {
 
     <div class="result-meta">
       <span class="result-count">{{ rowData.length.toLocaleString() }} record(s)</span>
-      <span class="edit-hint">Click a cell in "Order Status" column to edit inline</span>
+      <span class="edit-hint">Click "Order Status" cell to edit inline &nbsp;·&nbsp; Double-click a row to view details</span>
     </div>
 
     <div class="grid-wrapper ag-theme-alpine">
@@ -260,8 +274,15 @@ async function onCellValueChanged(event) {
         :animateRows="false"
         @grid-ready="onGridReady"
         @cell-value-changed="onCellValueChanged"
+        @row-double-clicked="onRowDoubleClicked"
       />
     </div>
+
+    <OrderDetailModal
+      v-if="showDetailModal && selectedOrder"
+      :order="selectedOrder"
+      @close="closeDetailModal"
+    />
   </div>
 </template>
 
@@ -376,6 +397,7 @@ async function onCellValueChanged(event) {
   color: #6b7280;
   font-style: italic;
 }
+
 
 .grid-wrapper {
   flex: 1;

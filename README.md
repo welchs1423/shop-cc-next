@@ -22,9 +22,15 @@ npm run dev
 src/
 ├── assets/         # Global CSS
 ├── components/
-│   └── layout/
-│       ├── AppSidebar.vue    # Left navigation sidebar
-│       └── AppTabBar.vue     # MDI tab bar
+│   ├── common/
+│   │   └── BaseModal.vue         # Reusable modal shell (dim + slots + close)
+│   ├── grid/
+│   │   └── StatusCellEditor.vue  # AG-Grid inline status editor
+│   ├── layout/
+│   │   ├── AppSidebar.vue        # Left navigation sidebar
+│   │   └── AppTabBar.vue         # MDI tab bar
+│   └── order/
+│       └── OrderDetailModal.vue  # Order detail popup (uses BaseModal)
 ├── router/
 │   └── index.js              # Vue Router configuration
 ├── stores/
@@ -45,6 +51,15 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 - **Vue Router** — reflects the active tab's path in the browser URL for bookmarkability
 
 ## Changelog
+
+### 2026-05-06
+
+#### v0.8.0 — Features
+
+- **Reusable Modal & Order Detail Popup**: Added a generic modal shell and an order detail popup wired to AG-Grid row double-click in `OrderInquiry.vue`.
+  - **`BaseModal.vue`** (`src/components/common/`): A fully reusable modal shell built with Vue `<Teleport to="body">` to avoid z-index stacking issues. Provides a semi-transparent dim overlay (click-outside closes), a centered white panel with configurable `width` prop, a sticky header with title and ✕ close button, a scrollable default body slot, and an optional `footer` slot (rendered only when provided). Emits `close` on both the X button and backdrop click.
+  - **`OrderDetailModal.vue`** (`src/components/order/`): Wraps `BaseModal` and accepts a single `order` Object prop. Displays all ten order fields (Order ID, Customer, Phone, Order Date, Product, Amount, Order Status, Shipping Address, Carrier, Tracking No.) in a two-column definition grid. Amount is locale-formatted (`₩`), Order Status renders the Korean label from `useCommonCodeStore` with a color-coded badge, and Carrier is resolved to its Korean display name. Emits `close` on footer button click.
+  - **`OrderInquiry.vue` integration**: Added `@row-double-clicked="onRowDoubleClicked"` to the AG-Grid component. The handler copies `event.data` into `selectedOrder` (shallow clone to prevent accidental mutation of grid data) and sets `showDetailModal` to `true`. The `OrderDetailModal` is conditionally rendered with `v-if` and receives the selected order via props; `@close` resets both reactive refs.
 
 ### 2026-05-06
 
