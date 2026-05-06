@@ -4,6 +4,7 @@ import { AgGridVue } from 'ag-grid-vue3'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { useCommonCodeStore } from '@/stores/commonCode'
 import StatusCellEditor from '@/components/grid/StatusCellEditor.vue'
+import { toast } from 'vue3-toastify'
 
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
@@ -148,6 +149,24 @@ function reset() {
   selectedDelivery.value = ''
   rowData.value = [...allRowData]
 }
+
+function mockSaveOrderStatus(orderId, newStatus) {
+  return new Promise(resolve => setTimeout(() => resolve({ ok: true, orderId, newStatus }), 500))
+}
+
+async function onCellValueChanged(event) {
+  if (event.oldValue === event.newValue) return
+
+  const orderId = event.data.orderId
+  const statusInfo = commonCodeStore.getOrderStatusInfo(event.newValue)
+  const statusLabel = statusInfo ? statusInfo.name : event.newValue
+
+  await mockSaveOrderStatus(orderId, event.newValue)
+
+  toast.success(`주문 [${orderId}]의 상태가 [${statusLabel}]로 변경되었습니다.`, {
+    autoClose: 3000,
+  })
+}
 </script>
 
 <template>
@@ -206,6 +225,7 @@ function reset() {
         :rowSelection="'single'"
         :animateRows="false"
         @grid-ready="onGridReady"
+        @cell-value-changed="onCellValueChanged"
       />
     </div>
   </div>

@@ -48,6 +48,15 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-05-06
 
+#### v0.4.0 — Features
+
+- **Inline Edit Async Save & Toast Notification (Order Inquiry)**: Implemented post-edit async save flow with user-facing toast feedback for the "Order Status" inline editor in `OrderInquiry.vue`.
+  - **Cell value change detection**: Wired AG-Grid's `cellValueChanged` event (`@cell-value-changed`) to a handler that fires whenever the user commits a new status via the `StatusCellEditor` dropdown.
+  - **Guard against no-op edits**: If `event.oldValue === event.newValue` (editor opened and closed without a real change), the handler exits immediately with no API call or notification.
+  - **Mock async API**: `mockSaveOrderStatus()` returns a `Promise` that resolves after a 500 ms `setTimeout`, simulating a real server round-trip.
+  - **Toast notification**: After the mock save resolves, `vue3-toastify` fires a success toast in the top-right corner: "주문 [ORD-XXXX]의 상태가 [새로운상태]로 변경되었습니다." The toast auto-dismisses after 3 seconds.
+  - **Library choice**: Added `vue3-toastify` (zero-dependency, ~10 kB) and registered it globally in `main.js` with `position: 'top-right'`, `autoClose: 3000`, `theme: 'light'`.
+
 #### v0.3.0 — Features
 
 - **Search Form Integration & Grid Filtering (Order Inquiry)**: Wired the search panel in `OrderInquiry.vue` to the AG-Grid data source so that filtering happens entirely on the client against the full 1,000-row mock dataset.
