@@ -46,6 +46,16 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ## Changelog
 
+### 2026-05-06
+
+#### v0.3.0 — Features
+
+- **Search Form Integration & Grid Filtering (Order Inquiry)**: Wired the search panel in `OrderInquiry.vue` to the AG-Grid data source so that filtering happens entirely on the client against the full 1,000-row mock dataset.
+  - **`v-model` bindings**: All three search controls — Keyword text input, Status `<select>`, and Carrier `<select>` — are bound to reactive `ref` variables (`searchKeyword`, `selectedStatus`, `selectedDelivery`).
+  - **Dynamic option rendering**: The Status and Carrier `<select>` options are no longer hardcoded. Options are derived at runtime from `useCommonCodeStore` (`orderStatusCodes` and `deliveryCodes`) via `computed` properties and rendered with `v-for`. A static "All" option (`value=""`) is prepended to each list to represent the unfiltered state.
+  - **Search logic**: Clicking the Search button (or pressing Enter in the keyword field) runs a filter pass over `allRowData`. Keyword matching uses case-insensitive `includes` against both `orderId` and `customerName`; Status and Carrier filters use exact code matching. Only rows satisfying all active conditions are assigned to `rowData`.
+  - **Reset logic**: Clicking the Reset button clears all three reactive fields to their empty/default values and restores `rowData` to the full 1,000-row dataset, giving the user a one-click way to return to the unfiltered view.
+
 ### 2026-04-30
 
 #### v0.2.1 — Improvements
