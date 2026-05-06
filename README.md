@@ -48,6 +48,12 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-05-06
 
+#### v0.6.0 — Features
+
+- **Smart CSV Export with Value Formatter (Order Inquiry)**: Enhanced `exportToCsv()` in `OrderInquiry.vue` with selection-aware download and human-readable cell output.
+  - **Selection-aware export**: Calls `gridApi.getSelectedNodes()` before exporting. If one or more rows are checked, `onlySelected: true` is passed to `exportDataAsCsv` so only the selected rows are written to the file. If nothing is selected, the flag is omitted and all currently filtered rows are exported.
+  - **Value Formatter mapping via `processCellCallback`**: For every cell, checks whether the column's `colDef` has a `valueFormatter`. If present, invokes it with the full AG-Grid parameter object (`value`, `data`, `node`, `colDef`, `column`, `api`) so the CSV contains the formatted display text rather than raw codes — e.g., `₩41,000` instead of `41000`, `CJ대한통운` instead of `CJGLS`, `배송 중` instead of `SHIPPED`.
+
 #### v0.5.0 — Features
 
 - **Checkbox Row Selection & CSV Export (Order Inquiry)**: Added multi-row selection via checkboxes and a one-click CSV export button to `OrderInquiry.vue`.

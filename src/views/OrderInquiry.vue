@@ -159,7 +159,28 @@ function exportToCsv() {
     String(today.getFullYear()) +
     String(today.getMonth() + 1).padStart(2, '0') +
     String(today.getDate()).padStart(2, '0')
-  gridApi.value.exportDataAsCsv({ fileName: `orders_${ymd}.csv` })
+
+  const selectedNodes = gridApi.value.getSelectedNodes()
+  const onlySelected = selectedNodes.length > 0
+
+  gridApi.value.exportDataAsCsv({
+    fileName: `orders_${ymd}.csv`,
+    onlySelected,
+    processCellCallback: params => {
+      const colDef = params.column.getColDef()
+      if (colDef.valueFormatter) {
+        return colDef.valueFormatter({
+          value: params.value,
+          data: params.node.data,
+          node: params.node,
+          colDef,
+          column: params.column,
+          api: params.api,
+        })
+      }
+      return params.value
+    },
+  })
 }
 
 function mockSaveOrderStatus(orderId, newStatus) {
