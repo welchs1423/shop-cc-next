@@ -77,6 +77,8 @@ const columnDefs = computed(() => [
     pinned: 'left',
     sortable: true,
     filter: true,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
   },
   { field: 'customerName', headerName: 'Customer', flex: 1.5, minWidth: 110, sortable: true, filter: true },
   { field: 'phone', headerName: 'Phone', flex: 1.5, minWidth: 130, sortable: false },
@@ -150,6 +152,16 @@ function reset() {
   rowData.value = [...allRowData]
 }
 
+function exportToCsv() {
+  if (!gridApi.value) return
+  const today = new Date()
+  const ymd =
+    String(today.getFullYear()) +
+    String(today.getMonth() + 1).padStart(2, '0') +
+    String(today.getDate()).padStart(2, '0')
+  gridApi.value.exportDataAsCsv({ fileName: `orders_${ymd}.csv` })
+}
+
 function mockSaveOrderStatus(orderId, newStatus) {
   return new Promise(resolve => setTimeout(() => resolve({ ok: true, orderId, newStatus }), 500))
 }
@@ -207,6 +219,7 @@ async function onCellValueChanged(event) {
         <div class="search-actions">
           <button class="btn btn-primary" @click="search">Search</button>
           <button class="btn btn-secondary" @click="reset">Reset</button>
+          <button class="btn btn-success" @click="exportToCsv">Excel Export</button>
         </div>
       </div>
     </div>
@@ -222,7 +235,7 @@ async function onCellValueChanged(event) {
         :rowData="rowData"
         :columnDefs="columnDefs"
         :defaultColDef="defaultColDef"
-        :rowSelection="'single'"
+        :rowSelection="'multiple'"
         :animateRows="false"
         @grid-ready="onGridReady"
         @cell-value-changed="onCellValueChanged"
@@ -321,6 +334,8 @@ async function onCellValueChanged(event) {
 .btn-primary:hover { background: #2563eb; }
 .btn-secondary { background: #e5e7eb; color: var(--text-primary); }
 .btn-secondary:hover { background: #d1d5db; }
+.btn-success { background: #16a34a; color: #ffffff; }
+.btn-success:hover { background: #15803d; }
 
 .result-meta {
   display: flex;

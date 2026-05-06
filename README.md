@@ -48,6 +48,12 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-05-06
 
+#### v0.5.0 — Features
+
+- **Checkbox Row Selection & CSV Export (Order Inquiry)**: Added multi-row selection via checkboxes and a one-click CSV export button to `OrderInquiry.vue`.
+  - **Checkbox selection**: `checkboxSelection: true` and `headerCheckboxSelection: true` added to the Order ID column; grid `rowSelection` changed from `'single'` to `'multiple'`, enabling header-level select-all and individual row toggling.
+  - **Excel Export button**: A green "Excel Export" button added to the search action bar. On click, `exportToCsv()` calls `gridApi.exportDataAsCsv()` with a dynamic filename `orders_YYYYMMDD.csv` (date resolved at click time), exporting the currently filtered/displayed rows.
+
 #### v0.4.0 — Features
 
 - **Inline Edit Async Save & Toast Notification (Order Inquiry)**: Implemented post-edit async save flow with user-facing toast feedback for the "Order Status" inline editor in `OrderInquiry.vue`.
