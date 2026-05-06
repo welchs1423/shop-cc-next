@@ -48,6 +48,15 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 
 ### 2026-05-06
 
+#### v0.7.0 — Features
+
+- **Claim Management Screen (AG-Grid)**: Replaced the legacy HTML-table-based `ClaimManagement.vue` with a full AG-Grid Community Edition implementation, matching the structure of `OrderInquiry.vue`.
+  - **8-column grid**: Claim ID (pinned left, checkbox), Order ID, Customer, Claim Type, Status, Reason, Amount (₩), Claim Date.
+  - **50 mock records**: Deterministic data generator covering all combinations of claim type (`RETURN`, `EXCHANGE`, `REFUND`) and claim status (`IN_PROGRESS`, `COMPLETED`, `PENDING`, `REJECTED`).
+  - **Korean label display via `valueFormatter`**: Claim Type and Status columns call `commonCodeStore.getClaimTypeInfo()` and `getClaimStatusInfo()` respectively, so the grid renders Korean labels (반품 / 교환 / 환불 / 진행중 / 완료 / 대기중 / 거절) instead of raw codes.
+  - **Checkbox multi-select & smart CSV export**: Inherited from `OrderInquiry.vue` — header checkbox for select-all, row-level checkboxes, and `exportToCsv()` with selection-aware download (`onlySelected`) and `processCellCallback` to write formatted values (Korean labels, ₩-formatted amounts) to the CSV.
+  - **Three-condition search**: Keyword (Claim ID / Order ID / Customer), Claim Type dropdown, and Status dropdown. Options are loaded at runtime from `useCommonCodeStore` via `computed` properties. Reset button restores the full 50-row dataset.
+
 #### v0.6.0 — Features
 
 - **Smart CSV Export with Value Formatter (Order Inquiry)**: Enhanced `exportToCsv()` in `OrderInquiry.vue` with selection-aware download and human-readable cell output.

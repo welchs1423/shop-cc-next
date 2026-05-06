@@ -1,75 +1,180 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
+import { AgGridVue } from 'ag-grid-vue3'
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { useCommonCodeStore } from '@/stores/commonCode'
+
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-alpine.css'
+
+ModuleRegistry.registerModules([AllCommunityModule])
 
 const commonCodeStore = useCommonCodeStore()
 
 const searchKeyword = ref('')
-const selectedType = ref('')
-const results = ref([])
-const searched = ref(false)
+const selectedClaimType = ref('')
+const selectedClaimStatus = ref('')
 
 const claimTypeOptions = computed(() =>
-  commonCodeStore.claimTypeCodes.map(c => ({
-    value: c.code,
-    label: c.name
-  }))
+  commonCodeStore.claimTypeCodes.map(c => ({ value: c.code, label: c.label }))
 )
-
 const claimStatusOptions = computed(() =>
-  commonCodeStore.claimStatusCodes.map(c => ({
-    value: c.code,
-    label: c.name
-  }))
+  commonCodeStore.claimStatusCodes.map(c => ({ value: c.code, label: c.label }))
 )
 
-const MOCK_DATA = [
-  { id: 1, claimId: 'CLM-20240101', orderId: 'ORD-20240101', customer: 'John Doe', type: 'RETURN', reason: 'Defective product', status: 'IN_PROGRESS' },
-  { id: 2, claimId: 'CLM-20240102', orderId: 'ORD-20240102', customer: 'Jane Smith', type: 'EXCHANGE', reason: 'Wrong size', status: 'COMPLETED' },
-  { id: 3, claimId: 'CLM-20240103', orderId: 'ORD-20240103', customer: 'Bob Johnson', type: 'REFUND', reason: 'Not as described', status: 'PENDING' },
-  { id: 4, claimId: 'CLM-20240104', orderId: 'ORD-20240104', customer: 'Alice Brown', type: 'RETURN', reason: 'Changed mind', status: 'REJECTED' },
+const CLAIM_TYPE_CODES = ['RETURN', 'EXCHANGE', 'REFUND']
+const CLAIM_STATUS_CODES = ['IN_PROGRESS', 'COMPLETED', 'PENDING', 'REJECTED']
+const CUSTOMERS = [
+  'Kim Minjun', 'Lee Soomin', 'Park Jihye', 'Choi Dongwoo',
+  'Jung Yuna', 'Han Seongjae', 'Yoon Jiyoung', 'Lim Taehyun',
+  'Song Hyuna', 'Oh Seungwoo',
+]
+const REASONS = [
+  'Product defect', 'Wrong item delivered', 'Changed mind',
+  'Size mismatch', 'Color different from image', 'Damaged during shipping',
+  'Missing parts', 'Duplicate order', 'Better price found', 'Delivery delay',
 ]
 
+function pad(n, width) {
+  return String(n).padStart(width, '0')
+}
+
+function generateMockData() {
+  const rows = []
+  for (let i = 1; i <= 50; i++) {
+    const month = pad((i % 12) + 1, 2)
+    const day = pad((i % 28) + 1, 2)
+    const hour = pad(i % 24, 2)
+    const min = pad((i * 7) % 60, 2)
+    rows.push({
+      claimId: `CLM-2024${month}${pad(i, 4)}`,
+      orderId: `ORD-2024${month}${pad(i * 19, 5)}`,
+      customerName: CUSTOMERS[i % CUSTOMERS.length],
+      claimType: CLAIM_TYPE_CODES[i % CLAIM_TYPE_CODES.length],
+      claimStatus: CLAIM_STATUS_CODES[i % CLAIM_STATUS_CODES.length],
+      reason: REASONS[i % REASONS.length],
+      amount: (5 + (i % 95)) * 1000,
+      claimDate: `2024-${month}-${day} ${hour}:${min}`,
+    })
+  }
+  return rows
+}
+
+const allRowData = generateMockData()
+const rowData = ref([...allRowData])
+
+const columnDefs = computed(() => [
+  {
+    field: 'claimId',
+    headerName: 'Claim ID',
+    width: 175,
+    minWidth: 150,
+    pinned: 'left',
+    sortable: true,
+    filter: true,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+  },
+  { field: 'orderId', headerName: 'Order ID', flex: 2, minWidth: 160, sortable: true, filter: true },
+  { field: 'customerName', headerName: 'Customer', flex: 1.5, minWidth: 120, sortable: true, filter: true },
+  {
+    field: 'claimType',
+    headerName: 'Claim Type',
+    flex: 1.5,
+    minWidth: 120,
+    sortable: true,
+    filter: true,
+    valueFormatter: p => {
+      const info = commonCodeStore.getClaimTypeInfo(p.value)
+      return info ? info.label : p.value
+    },
+  },
+  {
+    field: 'claimStatus',
+    headerName: 'Status',
+    flex: 1.5,
+    minWidth: 120,
+    sortable: true,
+    filter: true,
+    valueFormatter: p => {
+      const info = commonCodeStore.getClaimStatusInfo(p.value)
+      return info ? info.label : p.value
+    },
+  },
+  { field: 'reason', headerName: 'Reason', flex: 3, minWidth: 180, sortable: false },
+  {
+    field: 'amount',
+    headerName: 'Amount (₩)',
+    flex: 1.5,
+    minWidth: 120,
+    sortable: true,
+    valueFormatter: p => `₩${p.value.toLocaleString()}`,
+    type: 'numericColumn',
+  },
+  { field: 'claimDate', headerName: 'Claim Date', flex: 2, minWidth: 150, sortable: true },
+])
+
+const defaultColDef = {
+  resizable: true,
+  suppressMovable: false,
+}
+
+const gridApi = shallowRef(null)
+
+function onGridReady(params) {
+  gridApi.value = params.api
+}
+
 function search() {
-  searched.value = true
-  results.value = MOCK_DATA.filter(row => {
+  rowData.value = allRowData.filter(row => {
+    const kw = searchKeyword.value.toLowerCase()
     const matchKeyword =
-      !searchKeyword.value ||
-      row.claimId.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-      row.customer.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    const matchType = !selectedType.value || row.type === selectedType.value
-    return matchKeyword && matchType
+      !kw ||
+      row.claimId.toLowerCase().includes(kw) ||
+      row.orderId.toLowerCase().includes(kw) ||
+      row.customerName.toLowerCase().includes(kw)
+    const matchType = !selectedClaimType.value || row.claimType === selectedClaimType.value
+    const matchStatus = !selectedClaimStatus.value || row.claimStatus === selectedClaimStatus.value
+    return matchKeyword && matchType && matchStatus
   })
 }
 
 function reset() {
   searchKeyword.value = ''
-  selectedType.value = ''
-  results.value = []
-  searched.value = false
+  selectedClaimType.value = ''
+  selectedClaimStatus.value = ''
+  rowData.value = [...allRowData]
 }
 
-function getTypeLabel(code) {
-  const info = commonCodeStore.getClaimTypeInfo(code)
-  return info ? info.name : code
-}
+function exportToCsv() {
+  if (!gridApi.value) return
+  const today = new Date()
+  const ymd =
+    String(today.getFullYear()) +
+    String(today.getMonth() + 1).padStart(2, '0') +
+    String(today.getDate()).padStart(2, '0')
 
-function getStatusLabel(code) {
-  const info = commonCodeStore.getClaimStatusInfo(code)
-  return info ? info.name : code
-}
+  const selectedNodes = gridApi.value.getSelectedNodes()
+  const onlySelected = selectedNodes.length > 0
 
-const statusClass = {
-  IN_PROGRESS: 'badge-blue',
-  COMPLETED: 'badge-green',
-  PENDING: 'badge-yellow',
-  REJECTED: 'badge-red',
-}
-
-const typeClass = {
-  RETURN: 'type-return',
-  EXCHANGE: 'type-exchange',
-  REFUND: 'type-refund',
+  gridApi.value.exportDataAsCsv({
+    fileName: `claims_${ymd}.csv`,
+    onlySelected,
+    processCellCallback: params => {
+      const colDef = params.column.getColDef()
+      if (colDef.valueFormatter) {
+        return colDef.valueFormatter({
+          value: params.value,
+          data: params.node.data,
+          node: params.node,
+          colDef,
+          column: params.column,
+          api: params.api,
+        })
+      }
+      return params.value
+    },
+  })
 }
 </script>
 
@@ -86,19 +191,24 @@ const typeClass = {
           <input
             v-model="searchKeyword"
             class="field-input"
-            placeholder="Claim ID or Customer name"
+            placeholder="Claim ID, Order ID or Customer"
             @keyup.enter="search"
           />
         </div>
         <div class="field-group">
           <label class="field-label">Claim Type</label>
-          <select v-model="selectedType" class="field-select">
+          <select v-model="selectedClaimType" class="field-select">
             <option value="">All</option>
-            <option
-              v-for="opt in claimTypeOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
+            <option v-for="opt in claimTypeOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Status</label>
+          <select v-model="selectedClaimStatus" class="field-select">
+            <option value="">All</option>
+            <option v-for="opt in claimStatusOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
@@ -106,44 +216,25 @@ const typeClass = {
         <div class="search-actions">
           <button class="btn btn-primary" @click="search">Search</button>
           <button class="btn btn-secondary" @click="reset">Reset</button>
+          <button class="btn btn-success" @click="exportToCsv">Excel Export</button>
         </div>
       </div>
     </div>
 
-    <div class="result-panel">
-      <div class="result-header">
-        <span class="result-count" v-if="searched">
-          {{ results.length }} result(s) found
-        </span>
-      </div>
-      <table v-if="results.length > 0">
-        <thead>
-          <tr>
-            <th>Claim ID</th>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Type</th>
-            <th>Reason</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in results" :key="row.id">
-            <td>{{ row.claimId }}</td>
-            <td>{{ row.orderId }}</td>
-            <td>{{ row.customer }}</td>
-            <td>
-              <span class="type-tag" :class="typeClass[row.type]">{{ getTypeLabel(row.type) }}</span>
-            </td>
-            <td>{{ row.reason }}</td>
-            <td>
-              <span class="badge" :class="statusClass[row.status]">{{ getStatusLabel(row.status) }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-else-if="searched" class="empty-result">No results found.</div>
-      <div v-else class="empty-result">Enter search conditions and click Search.</div>
+    <div class="result-meta">
+      <span class="result-count">{{ rowData.length.toLocaleString() }} record(s)</span>
+    </div>
+
+    <div class="grid-wrapper ag-theme-alpine">
+      <ag-grid-vue
+        style="width: 100%; height: 100%"
+        :rowData="rowData"
+        :columnDefs="columnDefs"
+        :defaultColDef="defaultColDef"
+        :rowSelection="'multiple'"
+        :animateRows="false"
+        @grid-ready="onGridReady"
+      />
     </div>
   </div>
 </template>
@@ -154,12 +245,14 @@ const typeClass = {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  box-sizing: border-box;
 }
 
 .view-header {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .view-title {
@@ -173,6 +266,7 @@ const typeClass = {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px 20px;
+  flex-shrink: 0;
 }
 
 .search-row {
@@ -227,69 +321,35 @@ const typeClass = {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-primary {
-  background: #3b82f6;
-  color: #ffffff;
-}
+.btn-primary { background: #3b82f6; color: #ffffff; }
+.btn-primary:hover { background: #2563eb; }
+.btn-secondary { background: #e5e7eb; color: var(--text-primary); }
+.btn-secondary:hover { background: #d1d5db; }
+.btn-success { background: #16a34a; color: #ffffff; }
+.btn-success:hover { background: #15803d; }
 
-.btn-primary:hover {
-  background: #2563eb;
-}
-
-.btn-secondary {
-  background: #e5e7eb;
-  color: var(--text-primary);
-}
-
-.btn-secondary:hover {
-  background: #d1d5db;
-}
-
-.result-panel {
-  flex: 1;
+.result-meta {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.result-header {
-  min-height: 20px;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
 }
 
 .result-count {
   font-size: 13px;
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
-.empty-result {
-  padding: 40px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
+.grid-wrapper {
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
-
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-blue { background: #dbeafe; color: #1d4ed8; }
-.badge-green { background: #dcfce7; color: #166534; }
-.badge-yellow { background: #fef9c3; color: #854d0e; }
-.badge-red { background: #fee2e2; color: #991b1b; }
-
-.type-tag {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.type-return { color: #7c3aed; }
-.type-exchange { color: #0891b2; }
-.type-refund { color: #d97706; }
 </style>
