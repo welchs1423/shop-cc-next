@@ -6,6 +6,7 @@ const router = useRouter()
 const mdiStore = useMdiStore()
 
 const menuItems = [
+  { name: 'Dashboard', title: 'Dashboard', path: '/' },
   { name: 'OrderInquiry', title: 'Order Inquiry', path: '/order-inquiry' },
   { name: 'ClaimManagement', title: 'Claim Management', path: '/claim-management' },
 ]
@@ -31,7 +32,13 @@ function handleMenuClick(item) {
           @click="handleMenuClick(item)"
         >
           <span class="nav-icon">
-            <svg v-if="item.name === 'OrderInquiry'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg v-if="item.name === 'Dashboard'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <svg v-else-if="item.name === 'OrderInquiry'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
               <rect x="9" y="3" width="6" height="4" rx="1"/>
               <line x1="9" y1="12" x2="15" y2="12"/>

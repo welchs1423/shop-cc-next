@@ -8,6 +8,9 @@ Shopping mall consultant back-office system migrated from Java/Xplatform to Vue 
 - **Vite** — build tool and dev server
 - **Vue Router 4** — URL history management
 - **Pinia** — global state management
+- **AG-Grid Community v35** — enterprise data grid
+- **chart.js + vue-chartjs** — chart visualization (Doughnut, Bar)
+- **vue3-toastify** — toast notifications
 
 ## Getting Started
 
@@ -36,6 +39,7 @@ src/
 ├── stores/
 │   └── mdi.js                # Pinia store for MDI tab state
 ├── views/
+│   ├── Dashboard.vue         # Main dashboard with KPI cards and charts
 │   ├── OrderInquiry.vue      # Order inquiry screen
 │   └── ClaimManagement.vue   # Claim management screen
 ├── App.vue                   # Root layout with keep-alive MDI rendering
@@ -51,6 +55,19 @@ Menu clicks do not trigger full page transitions. Instead, each menu item opens 
 - **Vue Router** — reflects the active tab's path in the browser URL for bookmarkability
 
 ## Changelog
+
+### 2026-05-19
+
+#### v0.9.0 — Features
+
+- **Statistics Dashboard (Main Screen)**: Added `Dashboard.vue` as the application entry point (`/` route), replacing the previous redirect to Order Inquiry.
+  - **4 KPI Summary Cards**: Displays Total Orders, Total Revenue, Active Claims, and New Members — each with a color-coded icon, formatted value, unit label, and month-over-month change indicator (green ▲ / red ▼).
+  - **Doughnut Chart — Order Status Breakdown**: Visualizes the proportion of orders by status (결제완료 / 배송중 / 배송완료 / 취소·반품 / 교환처리중) using `vue-chartjs` `<Doughnut>` with a bottom legend and custom tooltip formatting (`toLocaleString()` with 건 unit).
+  - **Bar Chart — Monthly Revenue Trend**: Renders January–June 2025 monthly revenue (만원) using `vue-chartjs` `<Bar>` with rounded bar corners, hidden legend, currency-formatted y-axis ticks, and a subtle dashed grid.
+  - **CSS Grid layout**: Metrics row uses `repeat(4, 1fr)` and charts row uses `1fr 1fr`; both degrade gracefully via media queries (`@media max-width: 1200px` → 2-column metrics, `@media max-width: 900px` → stacked charts).
+  - **Color theme**: Enterprise blue/pastel palette — `#3b82f6` (blue), `#10b981` (green), `#f59e0b` (amber), `#8b5cf6` (purple), `#f43f5e` (red) — consistent with the existing sidebar and AG-Grid views.
+  - **Sidebar navigation**: Added "Dashboard" as the first menu item in `AppSidebar.vue` with a grid-square SVG icon.
+  - **Packages added**: `chart.js` and `vue-chartjs` installed as production dependencies.
 
 ### 2026-05-06
 

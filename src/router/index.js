@@ -3,7 +3,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    redirect: '/order-inquiry',
+    name: 'Dashboard',
+    component: () => import('@/views/Dashboard.vue'),
+    meta: { title: 'Dashboard' },
   },
   {
     path: '/order-inquiry',
